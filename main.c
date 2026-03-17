@@ -12,11 +12,34 @@
 
 #include "coders/codexion.h"
 
+void	*print_yo(void *info)
+{
+	printf("%s\n", (char *) info);
+	return NULL;
+}
+
 int	main(int ac, char **av)
 {
-	struct timeval	tv;
+	t_data	data;
 
-	settimeofday(&tv, 0);
-	ft_printf("%d", tv.tv_usec / 60 / 60);
-	av[0][0] = ac;
+	if (ft_validate_input(ac, av) == false)
+		return (printf("Wrong Input"));
+	data = convert_input_to_data(ac - 1, &av[1]);
+	printf("%d, %d, %d, %d , %d ,%d, %d, %u\n",
+			data.coders,
+			data.burnout_time,
+			data.compile_time,
+			data.debug_time,
+			data.refactor_time,
+			data.compile_goal,
+			data.dongle_time,
+			data.scheduler);
+	pthread_t	yo;
+	pthread_t	ya;
+	char	*test;
+	test = "Salut ca va\n";
+	pthread_create(&yo, NULL, print_yo, (void *)test);
+	pthread_create(&ya, NULL, print_yo, (void *)test);
+	pthread_join(yo, NULL);
+	return 0;
 }
