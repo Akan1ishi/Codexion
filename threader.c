@@ -1,29 +1,33 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   threader.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lumarcuc <lumarcuc@42.fr>                   +#+  +:+       +#+       */
+/*   By: lumarcuc <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/12 17:07:37 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/17 15:48:12 by lumarcuc         ###   ########.fr       */
+/*   Created: 2026/03/17 14:04:19 by lumarcuc          #+#    #+#             */
+/*   Updated: 2026/03/17 17:49:56 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "coders/codexion.h"
 
-void	*print_yo(void *info)
+t_dongle	**create_dongles(t_data data)
 {
-	printf("%s\n", (char *) info);
 	return NULL;
 }
 
-int	main(int ac, char **av)
+void	assign_dongles(t_coder *coder)
 {
-	t_data	data;
 
-	if (ft_validate_input(ac, av) == FALSE)
-		return (printf("Wrong Input"));
-	data = convert_input_to_data(ac - 1, &av[1]);
-	return (0);
+}
+
+t_coder	**create_coders(t_data data)
+{
+	return NULL;
+}
+
+t_control	*create_control(t_data data)
+{
+	return NULL;
 }
