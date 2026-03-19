@@ -50,6 +50,7 @@ typedef struct s_dongle
 	pthread_mutex_t	mutex;
 	pthread_cond_t	active;
 	pthread_t		thread;
+	t_BOOL		free;
 	int				id;
 	long long		cooldown;
 	t_BOOL	taken;
@@ -69,7 +70,9 @@ typedef struct s_coder
 	pthread_t	thread;
 	t_dongle	*left;
 	t_dongle	*right;
+	T_BOOL		*active;
 	int				id;
+	unsigned int	*work;
 	long long	start_time;
 	long long	last_compile;
 	t_BOOL		starved;
@@ -83,7 +86,9 @@ typedef struct s_control
 	t_coder		*coders;
 	t_dongle	*dongles;
 	t_schedule	scheduler;
+	t_BOOL		active;
 	unsigned int	goal;
+	unsigned int	nb_compiles;
 
 
 }	t_control;
