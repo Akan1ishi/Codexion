@@ -49,11 +49,11 @@ typedef struct s_dongle
 {
 	pthread_mutex_t	mutex;
 	pthread_cond_t	active;
-	pthread_t		thread;
+	pthread_t	thread;
 	t_BOOL		free;
-	int				id;
-	long long		cooldown;
-	t_BOOL	taken;
+	int		id;
+	long long	cooldown;
+	t_BOOL		taken;
 }	t_dongle;
 
 typedef enum e_type
@@ -66,14 +66,13 @@ typedef enum e_type
 
 typedef struct s_coder
 {
-	unsigned int	*compile_goal;
+	unsigned int	*nb_compiles;
 	pthread_t	thread;
-	t_dongle	*left;
-	t_dongle	*right;
-	T_BOOL		*active;
-	int				id;
+	t_dongle	left;
+	t_dongle	right;
+	int		id;
 	unsigned int	*work;
-	long long	start_time;
+	long long	*time;
 	long long	last_compile;
 	t_BOOL		starved;
 	void	*(*run)(void *);
@@ -83,14 +82,13 @@ typedef struct s_coder
 typedef struct s_control
 {
 	t_data		data;
+	long long	time;
 	t_coder		*coders;
 	t_dongle	*dongles;
 	t_schedule	scheduler;
 	t_BOOL		active;
 	unsigned int	goal;
 	unsigned int	nb_compiles;
-
-
 }	t_control;
 
 t_BOOL	ft_validate_input(int ac, char **av);
