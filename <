@@ -6,13 +6,12 @@
 
 typedef struct s_control
 {
+	pthread_t	thread;
 	pthread_mutex_t	mutex;
-	pthread_t thread;
-	long long start_time;
-	long long time;
+	long long current_time;
+	long long	start_time;
 	int	goal;
-	int	nb_compiles;
-	int	compile_goal;
+	int	current;
 }	t_control;
 
 typedef struct s_printer
@@ -21,23 +20,19 @@ typedef struct s_printer
 	pthread_t	thread;
 	int	id;
 	int rounds;
-	long long *time;
-	int	*nb_compiles;
+	long long *current_time;
+	int *nb_compiles;
 }t_printer;
 
 void	*control(void *arg)
 {
-	t_control	*controller;
+	t_control controller;
 
-	controller = (t_control *) &arg;
+	controller = *(t_control *) arg;
 	while (1)
 	{
-		if (controller->nb_compiles >= controller->compile_goal)
-		{
-			printf("Mission accomplished\n");
+		if (*&controller.current >= controller.goal)
 			break;
-		}
-
 	}
 	return NULL;
 }
@@ -46,17 +41,14 @@ void	*timer(void *arg)
 {
 	t_control	controller;
 	struct	timeval	tz;
-	long long	start_time;
 
 	controller = *(t_control *)arg;
 	gettimeofday(&tz, NULL);
-	start_time = (long long) tz.tv_sec * 1000;
-	//*&controller.start_time = start_time;
+	*&controller.start_time = (long long) tz.tv_sec * 1000;
 	while(1)
 	{
 		gettimeofday(&tz, NULL);
-	//	printf("TIMER [%lld] [%lld]\n", start_time, (long long) (tz.tv_sec * 1000 ) - start_time);
-		*&controller.time = (long long) (tz.tv_sec * 1000 ) - start_time;
+		*&controller.current_time = (long long) (tz.tv_sec * 1000 ) - controller.start_time;
 	}
 	return NULL;
 }
@@ -68,10 +60,10 @@ void	*print(void *arg)
 	printer = *(t_printer *) arg;
 	while (1)
 	{
-		printf("[Printer %d] || Round [%d]|| Time[%lld]\n", printer.id, printer.rounds + 1, *printer.time / 1000);
-		printer.rounds += 1;
-		if (printer.rounds == 20)
-			return NULL;
+		printf("[Printer %d] || Round [%d]|| Time[%lld]\n", printer.id, printer.rounds + 1, *printer.current_time / 1000);
+		pthread_mutex_lock(printer.mutex);
+		*&printer.nb_compiles += 1;
+		pthread_mutex_unlock(printer.mutex);
 	}
 	return NULL;
 }
@@ -83,18 +75,20 @@ int main(void)
 	t_printer	*printers;
 	int		nb_printers;
 
-	nb_printers = 3;
-	controller.time = 0;
-	//controller.start_time = 0;
-	//controller.compile_goal = 0;
-	controller.nb_compiles = 0;
+	nb_printers = 1;
+	controller.current_time = 0;
+	controller.start_time = 0;
+	controller.current = 0;
+	controller.goal = 10;
+	pthread_mutex_init(&controller.mutex, NULL);
 	printers = malloc(sizeof(t_printer) * nb_printers);
 	for (int i = 0; i < nb_printers; i++)
 	{
 		printers[i].id = i;
-		printers[i].time = &controller.time;
+		printers[i].current_time = &controller.current_time;
 		printers[i].rounds = 0;
-		printers[i].nb_compiles = &controller.nb_compiles;
+		printers[i].nb_compiles = &controller.current;
+		printers[i].mutex = &controller.mutex;
 	}
 	pthread_create(&timer_thread, NULL, timer, (void *) &controller);
 	pthread_create(&controller.thread, NULL, control, (void *) &controller);
@@ -103,6 +97,7 @@ int main(void)
 	pthread_join(controller.thread, NULL);
 	for (int i = 0; i < nb_printers; i++)
 		pthread_exit(printers[i].thread);
+	pthread_exit(timer_thread);
 	free(printers);
 	return 0;
 }
