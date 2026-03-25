@@ -45,15 +45,19 @@ typedef struct s_data
 
 }	t_data;
 
+typedef struct s_coder_info
+{
+	int	compile_time;
+	int	debug_time;
+	int	refactor_time;
+	int	dongle_cooldown;
+}	t_coder_info;
+
 typedef struct s_dongle
 {
 	pthread_mutex_t	mutex;
-	pthread_cond_t	active;
-	pthread_t	thread;
 	t_BOOL		free;
-	int		id;
-	long long	cooldown;
-	t_BOOL		taken;
+	struct timeval	next_free;
 }	t_dongle;
 
 typedef enum e_type
@@ -61,41 +65,47 @@ typedef enum e_type
 	COMPILING,
 	REFACTORING,
 	DEBUGGING,
-	NB_OPS
+	TAKE
 }	t_type;
 
 typedef struct s_coder
 {
+	t_coder_info	data;
 	unsigned int	*nb_compiles;
+	pthread_mutex_t	*global_mutex;
+	pthread_mutex_t	*output_mutex;
+	pthread_cond_t	*global_cond;
 	pthread_t	thread;
-	t_dongle	left;
-	t_dongle	right;
+	t_dongle	*left;
+	t_dongle	*right;
 	int		id;
-	unsigned int	*work;
-	long long	*time;
-	long long	last_compile;
-	t_BOOL		starved;
-	void	*(*run)(void *);
-	void	(*print)(long long, t_type);
+	struct timeval	start_time;
+	struct timeval	last_compile;
 }	t_coder;
 
 typedef struct s_control
 {
 	t_data		data;
-	long long	time;
+	pthread_t	thread;
+	pthread_mutex_t	global_mutex;
+	pthread_cond_t	global_cond;
+	pthread_mutex_t	output_mutex;
+	struct timeval	start_time;
 	t_coder		*coders;
 	t_dongle	*dongles;
-	t_schedule	scheduler;
-	t_BOOL		active;
-	unsigned int	goal;
 	unsigned int	nb_compiles;
 }	t_control;
 
-t_BOOL	ft_validate_input(int ac, char **av);
-int	check_str(char *str);
-t_BOOL	check_int(char *str);
-t_data	convert_input_to_data(int ac, char **av);
-// generators
-void	generate_dongles(t_control *controller);
-void	generate_coders(t_control *controller);
+// startup
+void		generate_dongles(t_control *controller);
+void		generate_coders(t_control *controller);
+t_control	init_controller(t_data data);
+void		start_threads(t_control controller);
+// threads
+void		*surveil(void *arg);
+void		*code(void *arg);
+// coder inside funcs
+void	compile(t_coder coder);
+void	refactor(t_coder coder);
+void	debug(t_coder coder);
 #endif

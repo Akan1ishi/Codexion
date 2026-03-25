@@ -12,22 +12,38 @@
 
 #include "coders/codexion.h"
 
-t_dongle	**create_dongles(t_data data)
+void	*surveil(void *arg)
 {
-	return NULL;
+	t_control	controller;
+
+	controller = *(t_control *) arg;
+	printf("CONTROLLER ONLINE\n");
+	return (NULL);
 }
 
-void	assign_dongles(t_coder *coder)
+void	*code(void *arg)
 {
+	t_coder	coder;
 
-}
-
-t_coder	**create_coders(t_data data)
-{
-	return NULL;
-}
-
-t_control	*create_control(t_data data)
-{
-	return NULL;
+	coder = *(t_coder *) arg;
+	pthread_mutex_lock(coder.global_mutex);
+	add_to_queue(coder);
+	while (TRUE)
+	{
+		while (dongles_free(coder) == FALSE || next_in_queue(coder) == FALSE)
+		{
+			if (dongles_under_cooldown(coder) == TRUE)
+				pthread_cond_timedwait(&coder.global_cond, &coder.global_mutex, get_dongle_timing(coder));
+			else
+				pthread_cond_wait(&coder.global_cond, &coder.global_mutex);
+		}
+		lock_dongles(coder);
+		remove_from_queue(coder);
+		pthread_mutex_unlock(&coder.global_mutex);
+		compile(coder);
+		unlock_dongles(coder);
+		debug(coder);
+		refactor(coder);
+	}
+	return (NULL);
 }

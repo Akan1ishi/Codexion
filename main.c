@@ -15,10 +15,17 @@
 int	main(int ac, char **av)
 {
 	t_data	data;
+	t_control	controller;
+	data.coders = 3;
+	data.burnout_time = 5000;
+	data.compile_time = 250;
+	data.debug_time = 500;
+	data.refactor_time = 350;
+	data.compile_goal = 100;
+	data.dongle_time = 300;
+	data.scheduler = FIFO;
 
-	if (ft_validate_input(ac, av) == FALSE)
-		return (printf("Wrong Input"));
-	data = convert_input_to_data(ac - 1, &av[1]);
-	run_stuff(data);
+	controller = init_controller(data);
+	start_threads(controller);
 	return (0);
 }
