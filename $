@@ -8,9 +8,7 @@ typedef struct s_control
 {
 	struct timeval start_time;
 	struct timeval current_time;
-	struct timespec current_time_ns;
 	pthread_mutex_t	mutex;
-	pthread_mutex_t	output_mutex;
 	pthread_t thread;
 	long long time;
 	int	nb_compiles;
@@ -21,19 +19,12 @@ typedef struct s_control
 typedef struct s_printer
 {
 	pthread_mutex_t	*mutex;
-	pthread_mutex_t	*output_mutex;
-	pthread_mutex_t	wait_mutex;
-	pthread_cond_t	wait_cond;
 	pthread_t	thread;
-	struct timeval *current_time;
 	int	id;
 	int rounds;
 	long long *time;
 	int	*nb_compiles;
 	bool	*active;
-	long long cooldown;
-	struct timespec abs_cooldown;
-	struct timespec *current_time_ns;
 
 }t_printer;
 
@@ -66,24 +57,19 @@ void	*timer(void *arg)
 	{
 		gettimeofday(&controller->current_time, NULL);
 		controller->time = (long long) (controller->current_time.tv_sec - controller->start_time.tv_sec) * 1000000 + (controller->current_time.tv_usec - controller->start_time.tv_usec);
-		controller->current_time_ns.tv_sec = controller->current_time.tv_sec + (controller->current_time.tv_usec  / 1000000);
-		controller->current_time_ns.tv_nsec = (controller->current_time.tv_usec % 1000000) * 1000;
 	}
 	return NULL;
 }
 
 void	print_info(t_printer printer)
 {
-	pthread_mutex_lock(printer.output_mutex);
 	if (*printer.active == true)
 		printf("[Printer %d] || Round [%d]|| Time[%lld] || Compiles[%d]\n", printer.id, printer.rounds + 1, *printer.time / 1000, *printer.nb_compiles + 1);
-	pthread_mutex_unlock(printer.output_mutex);
 
 }
 void	*print(void *arg)
 {
 	t_printer	printer;
-	long long 	total_nanoseconds;
 
 	printer = *(t_printer *) arg;
 	while (1)
@@ -94,17 +80,8 @@ void	*print(void *arg)
 		print_info(printer);
 		printer.rounds += 1;
 		*printer.nb_compiles += 1;
-		pthread_mutex_lock(&printer.wait_mutex);
-		total_nanoseconds = printer.current_time_ns->tv_nsec + (printer.cooldown * 1000);
-		printer.abs_cooldown.tv_sec = (printer.current_time_ns->tv_sec) + total_nanoseconds / 1000000000;
-		printer.abs_cooldown.tv_nsec = (printer.current_time_ns->tv_nsec) + total_nanoseconds % 1000000000;
-		printf("[TIMING REPORTS]\n(Timeval): seconds [%ld], microseconds[%d]\n(Timespec): seconds [%ld], nanoseconds [%ld]\n(Cooldowns): seconds [%ld], nanoseconds [%ld], cooldown[%lld]\n",
-				printer.current_time->tv_sec, printer.current_time->tv_usec,
-				printer.current_time_ns->tv_sec, printer.current_time_ns->tv_nsec,
-				printer.abs_cooldown.tv_sec, printer.abs_cooldown.tv_nsec, printer.cooldown);
-		pthread_cond_timedwait(&printer.wait_cond, &printer.wait_mutex, &printer.abs_cooldown);
-		pthread_mutex_unlock(&printer.wait_mutex);
 		pthread_mutex_unlock(printer.mutex);
+		usleep(1000);
 	}
 	return NULL;
 }
@@ -115,17 +92,14 @@ int main(void)
 	t_control	controller;
 	t_printer	*printers;
 	int		nb_printers;
-	long long	cooldown;
 
 	nb_printers = 5;
 	controller.time = 0;
 	controller.compile_goal = 200;
 	controller.nb_compiles = 0;
 	pthread_mutex_init(&controller.mutex, NULL);
-	pthread_mutex_init(&controller.output_mutex, NULL);
 	printers = malloc(sizeof(t_printer) * nb_printers);
 	controller.active = true;
-	cooldown = 9999 * 100000;
 	for (int i = 0; i < nb_printers; i++)
 	{
 		printers[i].id = i;
@@ -133,13 +107,7 @@ int main(void)
 		printers[i].rounds = 0;
 		printers[i].nb_compiles = &controller.nb_compiles;
 		printers[i].mutex = &controller.mutex;
-		printers[i].output_mutex = &controller.output_mutex;
 		printers[i].active = &controller.active;
-		pthread_mutex_init(&printers[i].wait_mutex, NULL);
-		pthread_cond_init(&printers[i].wait_cond, NULL);
-		printers[i].cooldown = cooldown;
-		printers[i].current_time = &controller.current_time;
-		printers[i].current_time_ns = &controller.current_time_ns;
 	}
 	pthread_create(&timer_thread, NULL, timer, (void *) &controller);
 	pthread_create(&controller.thread, NULL, control, (void *) &controller);
