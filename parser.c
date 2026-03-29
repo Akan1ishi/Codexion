@@ -21,11 +21,19 @@ t_BOOL	check_int(char *str)
 	i = 0;
 	while (i < len)
 	{
-		if (!(str[i] >= '0' || str[i] <= '9'))
-			return FALSE;
-		i++;
+		if ((str[i] >= '0' && str[i] <= '9') || (i == 0 && str[i] == '+'))
+			i++;
+		else
+			return (FALSE);
 	}
-	return TRUE;
+	if (len > 10)
+		return (FALSE);
+	if (len == 10)
+	{
+		if (strcmp(str, "2147483647") > 0)
+			return (FALSE);
+	}
+	return (TRUE);
 }
 
 int	check_str(char *str)
@@ -51,16 +59,32 @@ int	check_str(char *str)
 t_BOOL	ft_validate_input(int ac, char **av)
 {
 	int	i;
+	int	nb_errors;
+	t_BOOL	error;
 
+	error = TRUE;
 	i = 1;
+	nb_errors = 0;
 	if (ac != 9)
+	{
+		nb_errors += 1;
+		log_error(nb_errors, ARGS, 0);
 		return (FALSE);
+	}
 	while (i < 8)
 		if (check_int(av[i++]) == FALSE)
-			return (FALSE);
+		{
+			nb_errors += 1;
+			log_error(nb_errors, INT, i);
+			error = FALSE;
+		}
 	if (check_str(av[i]) == FALSE)
-		return FALSE;
-	return (TRUE);
+	{
+		error = FALSE;
+		nb_errors += 1;
+		log_error(nb_errors, SCHEDULE, i);
+	}
+	return error;
 }
 
 t_data	convert_input_to_data(int ac, char **av)
@@ -90,4 +114,16 @@ t_data	convert_input_to_data(int ac, char **av)
 		i++;
 	}
 	return (data);
+}
+
+void	log_error(int nb_error, t_log type, int arg_index)
+{
+	if (nb_error == 1)
+		printf("[ERROR] Wrong input\n");
+	if (type == ARGS)
+		printf("\nIncorrect number of arguments ; has to be exactly 8\n");
+	if (type == INT)
+		printf("\n[ARG %d] argument is not a valid int ; has to be between 0 and INT_MAX included ; no negatives allowed\n", arg_index - 1);
+	if (type == SCHEDULE)
+		printf("\n[ARG %d] argument is not a valid scheduler ; has to be exactly one of 'fifo' or 'edf'\n", arg_index - 1);
 }

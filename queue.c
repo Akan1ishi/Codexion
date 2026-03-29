@@ -3,16 +3,20 @@
 void	add_to_queue(t_queue **queue, t_coder *coder)
 {
 	t_queue	*element;
+	t_queue	*temp;
 
 	element = malloc(sizeof(t_queue) * 1);
 	element->coder = coder;
-	gettimeofday(&element->time_in_queue, NULL);
 	element->next = NULL;
 	if (*queue == NULL)
 		*queue = element;
 	else
-		(*queue)->next = element;
-	
+	{
+		temp = *queue;
+		while (temp->next)
+			temp = temp->next;
+		temp->next = element;
+	}
 }
 
 t_BOOL	next_in_queue(t_coder *coder, t_queue *queue)
@@ -48,25 +52,23 @@ void	remove_from_queue(t_queue **queue, t_coder *coder)
 	t_queue	*element;
 
 	temp = *queue;
-	if (((t_coder *)temp->coder)->id == coder->id)
+	if (*queue && ((t_coder *)temp->coder)->id == coder->id)
 	{
 		element = *queue;
-		temp = temp->next;
-		*queue = temp;
+		*queue = (*queue)->next;
 		free(element);
 		return ;
 	}
-	while (((t_coder *)temp->next->coder)->id != coder->id)
+	while (temp->next && ((t_coder *)temp->next->coder)->id != coder->id)
 		temp = temp->next;
 	element = temp->next;
 	temp->next = element->next;
 	free(element);
-	*queue = temp;
 }
 
 t_BOOL	in_queue(t_queue *queue, int id)
 {
-	while (queue->next)
+	while (queue)
 	{
 		if (((t_coder *)queue->coder)->id == id)
 			return (TRUE);
@@ -82,6 +84,11 @@ t_BOOL	has_priority(int id, int neighbour_id, t_schedule scheduler, t_queue *que
 	t_coder	*self;
 	t_coder	*neighbour_coder;
 
+	if (scheduler == FIFO)
+	{
+		if (appears_before(id, neighbour_id, queue) == TRUE)
+			return (TRUE);
+	}
 	neighbour = queue;
 	coder = queue;
 	while (((t_coder *)neighbour->coder)->id != neighbour_id)
@@ -90,10 +97,20 @@ t_BOOL	has_priority(int id, int neighbour_id, t_schedule scheduler, t_queue *que
 	while (((t_coder *)coder->coder)->id != id)
 		coder = coder->next;
 	self = (t_coder *)coder->coder;
-	if (scheduler == FIFO)
-		if (get_total_time_ms(coder->time_in_queue) > get_total_time_ms(neighbour->time_in_queue))
-			return (TRUE);
-	else if (get_actual_time_ms(self->last_compile) + self->data.burnout_time < get_actual_time(neighbour_coder->last_compile) + neighbour_coder->data.burnout_time)
+	if (get_total_time_timeval(*self->last_compile) + self->data.burnout_time <= get_total_time_timeval(*neighbour_coder->last_compile) + neighbour_coder->data.burnout_time)
 		return (TRUE);
 	return (FALSE);
+}
+
+t_BOOL	appears_before(int id, int neighbour_id, t_queue *queue)
+{
+	while (queue)
+	{
+		if (((t_coder *) queue->coder)->id == id)
+			return TRUE;
+		if (((t_coder *) queue->coder)->id == neighbour_id)
+			return FALSE;
+		queue = queue->next;
+	}
+	return FALSE;
 }

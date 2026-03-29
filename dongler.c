@@ -54,12 +54,42 @@ struct timespec	*convert_longest_dongle(t_coder *coder, struct timespec *cooldow
 		converted_time.tv_sec += converted_time.tv_nsec / 1000000000;
 		converted_time.tv_nsec %= 1000000000;
 	}
-	//printf("[TIMER DEBUG]\n %ld %d\n %ld %ld\n", highest.tv_sec, highest.tv_usec, converted_time.tv_sec, converted_time.tv_nsec);
 	*cooldown = converted_time;
 	return (cooldown);
 }
 
-long long	get_total_time_timeval(struct timeval time)
+void	manage_dongles(t_coder *coder, t_signal signal)
 {
-	return ((time.tv_sec * 1000000) + time.tv_usec);
+	mutex_op	mutex_handler;
+
+	mutex_handler = get_mutex_op(signal);
+	if (coder->id % 2 == 0)
+	{
+		mutex_handler(&coder->left->mutex);
+		mutex_handler(&coder->right->mutex);
+	}
+	else
+	{
+		mutex_handler(&coder->right->mutex);
+		mutex_handler(&coder->left->mutex);
+	}
+	if (signal == LOCK)
+	{
+		coder->right->free = FALSE;
+		coder->left->free = FALSE;
+	}
+}
+
+void	inscribe_dongle_data(t_coder *coder)
+{
+	struct timeval	tz;
+
+	gettimeofday(&tz, NULL);
+	*coder->last_compile = tz;
+	tz.tv_sec += coder->data.dongle_cooldown / 1000;
+	tz.tv_usec += (coder->data.dongle_cooldown * 1000) % 1000000;
+	coder->right->next_free = tz;
+	coder->left->next_free = tz;
+	coder->right->free = TRUE;
+	coder->left->free = TRUE;
 }
