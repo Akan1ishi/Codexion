@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 17:07:43 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/17 15:49:35 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/29 15:26:15 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,39 +58,30 @@ int	check_str(char *str)
 
 t_BOOL	ft_validate_input(int ac, char **av)
 {
-	int	i;
-	int	nb_errors;
+	int		i;
+	int		nb_errors;
 	t_BOOL	error;
 
 	error = TRUE;
 	i = 1;
 	nb_errors = 0;
 	if (ac != 9)
-	{
-		nb_errors += 1;
-		log_error(nb_errors, ARGS, 0);
-		return (FALSE);
-	}
+		return (log_error(&nb_errors, ARGS, 0, NULL));
 	while (i < 8)
-		if (check_int(av[i++]) == FALSE)
-		{
-			nb_errors += 1;
-			log_error(nb_errors, INT, i);
-			error = FALSE;
-		}
-	if (check_str(av[i]) == FALSE)
 	{
-		error = FALSE;
-		nb_errors += 1;
-		log_error(nb_errors, SCHEDULE, i);
+		if (check_int(av[i]) == FALSE)
+			error = log_error(&nb_errors, INT, i, av[i]);
+		i++;
 	}
-	return error;
+	if (check_str(av[i]) == FALSE)
+		error = log_error(&nb_errors, SCHEDULE, i, av[i]);
+	return (error);
 }
 
 t_data	convert_input_to_data(int ac, char **av)
 {
 	t_data	data;
-	int	i;
+	int		i;
 
 	i = 0;
 	while (i < ac)
@@ -116,14 +107,19 @@ t_data	convert_input_to_data(int ac, char **av)
 	return (data);
 }
 
-void	log_error(int nb_error, t_log type, int arg_index)
+t_BOOL	log_error(int *nb_error, t_log type, int arg_index, char *arg)
 {
-	if (nb_error == 1)
+	*nb_error += 1;
+	if (*nb_error == 1)
 		printf("[ERROR] Wrong input\n");
 	if (type == ARGS)
 		printf("\nIncorrect number of arguments ; has to be exactly 8\n");
 	if (type == INT)
-		printf("\n[ARG %d] argument is not a valid int ; has to be between 0 and INT_MAX included ; no negatives allowed\n", arg_index - 1);
+		printf("\n[ARG %d] '%s' : argument is not a valid int ; "
+			"has to be between 0 and INT_MAX included ; "
+			"no negatives allowed\n", arg_index, arg);
 	if (type == SCHEDULE)
-		printf("\n[ARG %d] argument is not a valid scheduler ; has to be exactly one of 'fifo' or 'edf'\n", arg_index - 1);
+		printf("\n[ARG %d] '%s' : argument is not a valid scheduler ; "
+			"has to be exactly one of 'fifo' or 'edf'\n", arg_index, arg);
+	return (FALSE);
 }

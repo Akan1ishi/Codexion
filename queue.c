@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   queue.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/29 14:28:49 by lumarcuc          #+#    #+#             */
+/*   Updated: 2026/03/29 15:46:18 by lumarcuc         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "coders/codexion.h"
 
 void	add_to_queue(t_queue **queue, t_coder *coder)
@@ -22,29 +34,28 @@ void	add_to_queue(t_queue **queue, t_coder *coder)
 t_BOOL	next_in_queue(t_coder *coder, t_queue *queue)
 {
 	int	left;
-	int 	right;
+	int	right;
 
 	if (coder->id == 1)
-		left = coder->data.total_coders;
+		left = coder->data.coders;
 	else
 		left = coder->id - 1;
-	if (coder->id == coder->data.total_coders)
+	if (coder->id == coder->data.coders)
 		right = 1;
 	else
 		right = coder->id + 1;
 	if (in_queue(queue, right) == TRUE)
 	{
-		if (has_priority(coder->id, right, coder->data.scheduler, queue) == FALSE)
+		if (priority(coder->id, right, coder->data.scheduler, queue) == FALSE)
 			return (FALSE);
 	}
 	if (in_queue(queue, left) == TRUE)
 	{
-		if (has_priority(coder->id, left, coder->data.scheduler, queue) == FALSE)
+		if (priority(coder->id, left, coder->data.scheduler, queue) == FALSE)
 			return (FALSE);
 	}
 	return (TRUE);
 }
-
 
 void	remove_from_queue(t_queue **queue, t_coder *coder)
 {
@@ -66,7 +77,7 @@ void	remove_from_queue(t_queue **queue, t_coder *coder)
 	free(element);
 }
 
-t_BOOL	in_queue(t_queue *queue, int id)
+t_BOOL	in_queue(t_queue *queue, unsigned int id)
 {
 	while (queue)
 	{
@@ -77,7 +88,7 @@ t_BOOL	in_queue(t_queue *queue, int id)
 	return (FALSE);
 }
 
-t_BOOL	has_priority(int id, int neighbour_id, t_schedule scheduler, t_queue *queue)
+t_BOOL	priority(int id, int nid, t_schedule scheduler, t_queue *queue)
 {
 	t_queue	*neighbour;
 	t_queue	*coder;
@@ -86,31 +97,20 @@ t_BOOL	has_priority(int id, int neighbour_id, t_schedule scheduler, t_queue *que
 
 	if (scheduler == FIFO)
 	{
-		if (appears_before(id, neighbour_id, queue) == TRUE)
+		if (appears_before(id, nid, queue) == TRUE)
 			return (TRUE);
 	}
 	neighbour = queue;
 	coder = queue;
-	while (((t_coder *)neighbour->coder)->id != neighbour_id)
+	while (((t_coder *)neighbour->coder)->id != (unsigned int) id)
 		neighbour = neighbour->next;
 	neighbour_coder = (t_coder *)neighbour->coder;
-	while (((t_coder *)coder->coder)->id != id)
+	while (((t_coder *)coder->coder)->id != (unsigned int) id)
 		coder = coder->next;
 	self = (t_coder *)coder->coder;
-	if (get_total_time_timeval(*self->last_compile) + self->data.burnout_time <= get_total_time_timeval(*neighbour_coder->last_compile) + neighbour_coder->data.burnout_time)
+	if (get_total_time_timeval(*self->last_compile) + self->data.burnout_time
+		<= get_total_time_timeval(*neighbour_coder->last_compile)
+		+ neighbour_coder->data.burnout_time)
 		return (TRUE);
 	return (FALSE);
-}
-
-t_BOOL	appears_before(int id, int neighbour_id, t_queue *queue)
-{
-	while (queue)
-	{
-		if (((t_coder *) queue->coder)->id == id)
-			return TRUE;
-		if (((t_coder *) queue->coder)->id == neighbour_id)
-			return FALSE;
-		queue = queue->next;
-	}
-	return FALSE;
 }

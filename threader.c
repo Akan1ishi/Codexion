@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   threader.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lumarcuc <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: lumarcuc <lumarcuc@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 14:04:19 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/17 17:49:56 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/29 15:51:15 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,34 +14,26 @@
 
 void	*surveil(void *arg)
 {
-	t_control	*controller;
+	t_control		*controller;
 	struct timeval	current_time;
-	unsigned int	index;
+	unsigned int	i;
 
 	controller = (t_control *) arg;
 	while (TRUE)
 	{
 		gettimeofday(&current_time, NULL);
 		if (*controller->nb_compiles >= controller->data.compile_goal)
+			return (end(current_time, SUCCESS, 0, controller));
+		i = 0;
+		while (i < controller->data.coders)
 		{
-			signal_end(current_time, SUCCESS, 0, controller);
-			break;
+			if (is_burned_out(current_time, *controller->coders[i].last_compile,
+					controller->data.burnout_time) == TRUE)
+				return (end(current_time, BURNOUT, 0, controller));
+			i++;
 		}
-		index = 0;
-		while (index < controller->data.coders)
-		{
-			if (is_burned_out(current_time, *controller->coders[index].last_compile, controller->data.burnout_time) == TRUE)
-			{
-				signal_end(current_time, BURNOUT, index + 1, controller);
-				break;
-			}
-			index++;
-		}
-		if (*controller->active == FALSE)
-			break;
-
 	}
-	return NULL;
+	return (NULL);
 }
 
 void	*code(void *arg)
@@ -49,27 +41,28 @@ void	*code(void *arg)
 	t_coder	*coder;
 
 	coder = (t_coder *) arg;
-	if (coder->data.total_coders == 1)
+	if (coder->data.coders == 1)
 		return (rot_in_hell(coder));
 	while (TRUE)
 	{
 		if (*coder->active == FALSE)
-			break;
-		pthread_mutex_lock(coder->global_mutex);
+			break ;
+		pthread_mutex_lock(coder->queue_mutex);
 		add_to_queue(coder->queue, coder);
-		while (dongles_are_free(coder) == FALSE || next_in_queue(coder, *coder->queue) == FALSE)
+		while (dongles_are_free(coder) == FALSE
+			|| next_in_queue(coder, *coder->queue) == FALSE)
 		{
 			if (dongles_on_cooldown(coder) == TRUE)
-				pthread_cond_timedwait(coder->global_cond, coder->global_mutex, convert_longest_dongle(coder, &coder->cooldown));
+				pthread_cond_timedwait(coder->queue_cond, coder->queue_mutex,
+					convert_longest_dongle(coder, &coder->cooldown));
 			else
-				pthread_cond_wait(coder->global_cond, coder->global_mutex);
+				pthread_cond_wait(coder->queue_cond, coder->queue_mutex);
 		}
 		remove_from_queue(coder->queue, coder);
-		work_schedule(coder, COMPILING);
-		work_schedule(coder, DEBUGGING);
-		work_schedule(coder, REFACTORING);
+		pthread_mutex_unlock(coder->queue_mutex);
+		work(coder);
 	}
-	return NULL;
+	return (NULL);
 }
 
 void	*rot_in_hell(t_coder *coder)
@@ -78,7 +71,27 @@ void	*rot_in_hell(t_coder *coder)
 	{
 		usleep(1000);
 		if (*coder->active == FALSE)
-			break;
+			break ;
 	}
 	return (NULL);
+}
+
+t_BOOL	appears_before(int id, int neighbour_id, t_queue *queue)
+{
+	while (queue)
+	{
+		if (((t_coder *) queue->coder)->id == (unsigned int) id)
+			return (TRUE);
+		if (((t_coder *) queue->coder)->id == (unsigned int) neighbour_id)
+			return (FALSE);
+		queue = queue->next;
+	}
+	return (FALSE);
+}
+
+void	work(t_coder *coder)
+{
+	work_schedule(coder, COMPILING);
+	work_schedule(coder, DEBUGGING);
+	work_schedule(coder, REFACTORING);
 }

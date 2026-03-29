@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                   +#+  +:+       +#+       */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 17:07:37 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/18 11:39:20 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/29 14:20:14 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 int	main(int ac, char **av)
 {
-	t_data	data;
+	t_data		data;
 	t_control	controller;
 
 	if (ft_validate_input(ac, av) == FALSE)

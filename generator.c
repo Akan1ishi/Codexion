@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   generator.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lumarcuc <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/18 11:43:07 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/18 16:03:41 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/29 15:33:41 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,9 @@
 
 void	generate_dongles(t_control *controller)
 {
-	t_dongle	*dongles;
+	t_dongle		*dongles;
 	unsigned int	i;
-	
+
 	dongles = malloc(sizeof(t_dongle) * controller->data.coders);
 	if (!dongles)
 		return ;
@@ -33,7 +33,7 @@ void	generate_dongles(t_control *controller)
 
 void	generate_coders(t_control *controller)
 {
-	t_coder		*coders;
+	t_coder			*coders;
 	unsigned int	i;
 
 	coders = malloc(sizeof(t_coder) * controller->data.coders);
@@ -42,31 +42,19 @@ void	generate_coders(t_control *controller)
 	i = 0;
 	while (i < controller->data.coders)
 	{
-		coders[i].data.compile_time = controller->data.compile_time;
-		coders[i].data.debug_time = controller->data.debug_time;
-		coders[i].data.refactor_time = controller->data.refactor_time;
-		coders[i].data.dongle_cooldown = controller->data.dongle_time;
-		coders[i].data.total_coders = controller->data.coders;
-		coders[i].data.scheduler = controller->data.scheduler;
-		coders[i].data.burnout_time = controller->data.burnout_time;
+		coders[i].data = controller->data;
 		coders[i].nb_compiles = controller->nb_compiles;
 		coders[i].start_time = controller->start_time;
 		coders[i].id = i + 1;
 		coders[i].last_compile = malloc(sizeof(struct timeval));
 		*coders[i].last_compile = controller->start_time;
-		coders[i].right = &controller->dongles[i];
-		coders[i].global_mutex = &controller->global_mutex;
+		coders[i].queue_mutex = &controller->queue_mutex;
 		coders[i].output_mutex = &controller->output_mutex;
-		coders[i].global_cond = &controller->global_cond;
+		coders[i].queue_cond = &controller->queue_cond;
 		coders[i].work_mutex = &controller->work_mutex;
 		coders[i].queue = &controller->queue;
 		coders[i].active = controller->active;
-		coders[i].thread = 0;
-		if (i == 0)
-			coders[i].left = &controller->dongles[controller->data.coders - 1];
-		else
-			coders[i].left = &controller->dongles[i - 1];
-
+		assign_dongle(coders, controller, i);
 		i++;
 	}
 	controller->coders = coders;
@@ -83,8 +71,8 @@ t_control	init_controller(t_data data)
 	controller.active = malloc(sizeof(t_BOOL));
 	*controller.active = TRUE;
 	controller.queue = NULL;
-	pthread_mutex_init(&controller.global_mutex, NULL);
-	pthread_cond_init(&controller.global_cond, NULL);
+	pthread_mutex_init(&controller.queue_mutex, NULL);
+	pthread_cond_init(&controller.queue_cond, NULL);
 	pthread_mutex_init(&controller.output_mutex, NULL);
 	pthread_mutex_init(&controller.work_mutex, NULL);
 	gettimeofday(&controller.start_time, NULL);
@@ -101,7 +89,17 @@ void	start_threads(t_control controller)
 	i = 0;
 	while (i < controller.data.coders)
 	{
-		pthread_create(&controller.coders[i].thread, NULL, code, (void *) &controller.coders[i]);
-	i++;
+		pthread_create(&controller.coders[i].thread, NULL,
+			code, (void *) &controller.coders[i]);
+		i++;
 	}
+}
+
+void	assign_dongle(t_coder *coders, t_control *controller, unsigned int id)
+{
+	coders[id].right = &controller->dongles[id];
+	if (id == 0)
+		coders[id].left = &controller->dongles[controller->data.coders - 1];
+	else
+		coders[id].left = &controller->dongles[id - 1];
 }
