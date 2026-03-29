@@ -6,7 +6,7 @@
 /*   By: lumarcuc <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 17:51:08 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/29 15:22:18 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/29 17:21:59 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,7 +85,9 @@ void	inscribe_dongle_data(t_coder *coder)
 	struct timeval	tz;
 
 	gettimeofday(&tz, NULL);
+	pthread_mutex_lock(&coder->burnout_mutex);
 	*coder->last_compile = tz;
+	pthread_mutex_unlock(&coder->burnout_mutex);
 	tz.tv_sec += coder->data.dongle_time / 1000;
 	tz.tv_usec += (coder->data.dongle_time * 1000) % 1000000;
 	coder->right->next_free = tz;

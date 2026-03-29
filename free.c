@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/29 14:29:19 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/29 14:29:52 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/29 17:27:42 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,16 +35,10 @@ void	liberate_threads(t_control *controller)
 	unsigned int	i;
 
 	i = 0;
-	pthread_join(controller->thread, NULL);
-	while (i < controller->data.coders)
-	{
-		pthread_join(controller->coders[i].thread, NULL);
-		i++;
-	}
-	i = 0;
 	while (i < controller->data.coders)
 	{
 		pthread_mutex_destroy(&controller->dongles[i].mutex);
+		pthread_mutex_destroy(&controller->coders[i].burnout_mutex);
 		i++;
 	}
 	pthread_mutex_destroy(&controller->queue_mutex);

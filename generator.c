@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/18 11:43:07 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/29 15:33:41 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/29 17:26:11 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ void	generate_coders(t_control *controller)
 	i = 0;
 	while (i < controller->data.coders)
 	{
+		pthread_mutex_init(&coders[i].burnout_mutex, NULL);
 		coders[i].data = controller->data;
 		coders[i].nb_compiles = controller->nb_compiles;
 		coders[i].start_time = controller->start_time;
@@ -53,7 +54,6 @@ void	generate_coders(t_control *controller)
 		coders[i].queue_cond = &controller->queue_cond;
 		coders[i].work_mutex = &controller->work_mutex;
 		coders[i].queue = &controller->queue;
-		coders[i].active = controller->active;
 		assign_dongle(coders, controller, i);
 		i++;
 	}
@@ -93,10 +93,18 @@ void	start_threads(t_control controller)
 			code, (void *) &controller.coders[i]);
 		i++;
 	}
+	i = 0;
+	pthread_join(controller.thread, NULL);
+	while (i < controller.data.coders)
+	{
+		pthread_join(controller.coders[i].thread, NULL);
+		i++;
+	}
 }
 
 void	assign_dongle(t_coder *coders, t_control *controller, unsigned int id)
 {
+	coders[id].active = controller->active;
 	coders[id].right = &controller->dongles[id];
 	if (id == 0)
 		coders[id].left = &controller->dongles[controller->data.coders - 1];

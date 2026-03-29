@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 17:07:07 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/29 15:49:17 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/29 17:20:42 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,6 +92,7 @@ typedef struct s_coder
 	pthread_mutex_t	*output_mutex;
 	pthread_cond_t	*queue_cond;
 	pthread_mutex_t	*work_mutex;
+	pthread_mutex_t	burnout_mutex;
 	pthread_t		thread;
 	t_dongle		*left;
 	t_dongle		*right;

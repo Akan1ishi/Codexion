@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   threader.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lumarcuc <lumarcuc@42.fr>                    +#+  +:+       +#+        */
+/*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 14:04:19 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/29 15:51:15 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/29 17:22:35 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,14 +22,18 @@ void	*surveil(void *arg)
 	while (TRUE)
 	{
 		gettimeofday(&current_time, NULL);
+		pthread_mutex_lock(&controller->work_mutex);
 		if (*controller->nb_compiles >= controller->data.compile_goal)
 			return (end(current_time, SUCCESS, 0, controller));
+		pthread_mutex_unlock(&controller->work_mutex);
 		i = 0;
 		while (i < controller->data.coders)
 		{
+			pthread_mutex_lock(&controller->coders[i].burnout_mutex);
 			if (is_burned_out(current_time, *controller->coders[i].last_compile,
 					controller->data.burnout_time) == TRUE)
 				return (end(current_time, BURNOUT, 0, controller));
+			pthread_mutex_unlock(&controller->coders[i].burnout_mutex);
 			i++;
 		}
 	}
