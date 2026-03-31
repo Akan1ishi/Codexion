@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/18 11:43:07 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/31 18:27:45 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/31 19:50:09 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,8 +43,6 @@ void	generate_coders(t_control *controller)
 	i = 0;
 	while (i < controller->data.coders)
 	{
-		pthread_mutex_init(&coders[i].burnout_mutex, NULL);
-		pthread_mutex_init(&coders[i].compile_mutex, NULL);
 		coders[i].data = controller->data;
 		coders[i].nb_compiles = 0;
 		coders[i].start_time = controller->start_time;
@@ -55,7 +53,6 @@ void	generate_coders(t_control *controller)
 		coders[i].active_mutex = controller->active_mutex;
 		coders[i].output_mutex = controller->output_mutex;
 		coders[i].queue_cond = controller->queue_cond;
-		coders[i].queue = &controller->queue;
 		coders[i].finished = FALSE;
 		assign_dongle(coders, controller, i);
 		i++;
@@ -89,13 +86,17 @@ t_control	init_controller(t_data data)
 void	start_threads(t_control controller)
 {
 	unsigned int	i;
+	void			*coder_func;
 
 	pthread_create(&controller.thread, NULL, surveil, (void *) &controller);
+	coder_func = code;
+	if (controller.data.coders == 1)
+		coder_func = rot_in_hell;
 	i = 0;
 	while (i < controller.data.coders)
 	{
 		pthread_create(&controller.coders[i].thread, NULL,
-			code, (void *) &controller.coders[i]);
+			coder_func, (void *) &controller.coders[i]);
 		i++;
 	}
 	i = 0;
@@ -109,7 +110,10 @@ void	start_threads(t_control controller)
 
 void	assign_dongle(t_coder *coders, t_control *controller, unsigned int id)
 {
+	pthread_mutex_init(&coders[id].burnout_mutex, NULL);
+	pthread_mutex_init(&coders[id].compile_mutex, NULL);
 	coders[id].active = controller->active;
+	coders[id].queue = &controller->queue;
 	coders[id].right = &controller->dongles[id];
 	if (id == 0)
 		coders[id].left = &controller->dongles[controller->data.coders - 1];

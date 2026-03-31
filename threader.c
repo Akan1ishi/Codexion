@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 14:04:19 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/31 18:41:37 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/31 19:47:27 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,8 +44,6 @@ void	*code(void *arg)
 	t_coder	*coder;
 
 	coder = (t_coder *) arg;
-	if (coder->data.coders == 1)
-		return (rot_in_hell(coder));
 	while (TRUE)
 	{
 		if (supervisor_said_its_over(coder) == TRUE)
