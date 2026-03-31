@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   dongler.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lumarcuc <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 17:51:08 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/29 17:21:59 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/31 17:27:31 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,24 +14,33 @@
 
 t_BOOL	dongles_are_free(t_coder *coder)
 {
+	t_BOOL	result;
+
+	result = TRUE;
+	lock_dongles(coder, LOCK);
 	if (coder->right->free == FALSE || coder->left->free == FALSE)
-		return (FALSE);
+		result = FALSE;
+	lock_dongles(coder, UNLOCK);
 	if (dongles_on_cooldown(coder) == TRUE)
-		return (FALSE);
-	return (TRUE);
+		result = FALSE;
+	return (result);
 }
 
 t_BOOL	dongles_on_cooldown(t_coder *coder)
 {
 	struct timeval	current_time;
 	long long		total_current_time;
+	t_BOOL			result;
 
+	result = FALSE;
 	gettimeofday(&current_time, NULL);
 	total_current_time = get_total_time_timeval(current_time);
+	lock_dongles(coder, LOCK);
 	if (get_total_time_timeval(coder->left->next_free) > total_current_time
 		|| get_total_time_timeval(coder->right->next_free) > total_current_time)
-		return (TRUE);
-	return (FALSE);
+		result = TRUE;
+	lock_dongles(coder, UNLOCK);
+	return (result);
 }
 
 struct timespec	*convert_longest_dongle(t_coder *coder, struct timespec *cd)
@@ -41,6 +50,7 @@ struct timespec	*convert_longest_dongle(t_coder *coder, struct timespec *cd)
 	struct timeval	right;
 	struct timeval	highest;
 
+	lock_dongles(coder, LOCK);
 	left = coder->left->next_free;
 	right = coder->right->next_free;
 	if (get_total_time_timeval(left) > get_total_time_timeval(right))
@@ -55,7 +65,23 @@ struct timespec	*convert_longest_dongle(t_coder *coder, struct timespec *cd)
 		converted_time.tv_nsec %= 1000000000;
 	}
 	*cd = converted_time;
+	lock_dongles(coder, UNLOCK);
 	return (cd);
+}
+
+void	lock_dongles(t_coder *coder, t_signal signal)
+{
+	t_mutex_op	mutex_handler;
+	mutex_handler = get_mutex_op(signal);
+
+	if (coder->id % 2 == 0)
+	{
+			mutex_handler(&coder->left->data_mutex);
+			mutex_handler(&coder->right->data_mutex);
+			return ;
+	}
+	mutex_handler(&coder->right->data_mutex);	
+	mutex_handler(&coder->left->data_mutex);
 }
 
 void	manage_dongles(t_coder *coder, t_signal signal)
@@ -75,8 +101,10 @@ void	manage_dongles(t_coder *coder, t_signal signal)
 	}
 	if (signal == LOCK)
 	{
+		lock_dongles(coder, LOCK);
 		coder->right->free = FALSE;
 		coder->left->free = FALSE;
+		lock_dongles(coder, UNLOCK);
 	}
 }
 
@@ -88,10 +116,12 @@ void	inscribe_dongle_data(t_coder *coder)
 	pthread_mutex_lock(&coder->burnout_mutex);
 	*coder->last_compile = tz;
 	pthread_mutex_unlock(&coder->burnout_mutex);
+	lock_dongles(coder, LOCK);
 	tz.tv_sec += coder->data.dongle_time / 1000;
 	tz.tv_usec += (coder->data.dongle_time * 1000) % 1000000;
 	coder->right->next_free = tz;
 	coder->left->next_free = tz;
 	coder->right->free = TRUE;
 	coder->left->free = TRUE;
+	lock_dongles(coder, UNLOCK);
 }

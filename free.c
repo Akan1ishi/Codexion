@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/29 14:29:19 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/29 17:27:42 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/31 18:31:46 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,8 +25,6 @@ void	free_everything(t_control *controller)
 	}
 	free(controller->coders);
 	free(controller->dongles);
-	free(controller->active);
-	free(controller->nb_compiles);
 	free_queue(controller->queue);
 }
 
@@ -38,13 +36,20 @@ void	liberate_threads(t_control *controller)
 	while (i < controller->data.coders)
 	{
 		pthread_mutex_destroy(&controller->dongles[i].mutex);
+		pthread_mutex_destroy(&controller->dongles[i].data_mutex);
 		pthread_mutex_destroy(&controller->coders[i].burnout_mutex);
+		pthread_mutex_destroy(&controller->coders[i].compile_mutex);
 		i++;
 	}
-	pthread_mutex_destroy(&controller->queue_mutex);
-	pthread_mutex_destroy(&controller->output_mutex);
-	pthread_mutex_destroy(&controller->work_mutex);
-	pthread_cond_destroy(&controller->queue_cond);
+	pthread_mutex_destroy(controller->queue_mutex);
+	pthread_mutex_destroy(controller->output_mutex);
+	pthread_mutex_destroy(controller->active_mutex);
+	pthread_cond_destroy(controller->queue_cond);
+	free(controller->active);
+	free(controller->queue_mutex);
+	free(controller->active_mutex);
+	free(controller->output_mutex);
+	free(controller->queue_cond);
 }
 
 void	free_queue(t_queue *queue)

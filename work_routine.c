@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/29 14:30:01 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/29 15:25:13 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/31 18:23:03 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ void	log_status(t_coder *coder, t_type operation)
 	gettimeofday(&tz, NULL);
 	actual_time = get_actual_time_ms(coder->start_time, tz);
 	pthread_mutex_lock(coder->output_mutex);
-	if (*coder->active == TRUE)
+	if (supervisor_said_its_over(coder) == FALSE)
 	{
 		if (operation == COMPILING)
 			printf("%lld %d is compiling\n", actual_time, coder->id);
@@ -64,10 +64,10 @@ void	work_schedule(t_coder *coder, t_type operation)
 	manage_dongles(coder, LOCK);
 	log_status(coder, operation);
 	wait_cooldown(operation, coder->data);
-	pthread_mutex_lock(coder->work_mutex);
-	*coder->nb_compiles += 1;
+	coder->nb_compiles += 1;
 	inscribe_dongle_data(coder);
-	pthread_mutex_unlock(coder->work_mutex);
 	manage_dongles(coder, UNLOCK);
+	pthread_mutex_lock(coder->queue_mutex);
 	pthread_cond_broadcast(coder->queue_cond);
+	pthread_mutex_unlock(coder->queue_mutex);
 }

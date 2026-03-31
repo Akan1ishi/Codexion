@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 17:07:07 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/29 17:20:42 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/31 18:28:11 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,7 @@ typedef struct s_data
 typedef struct s_dongle
 {
 	pthread_mutex_t	mutex;
+	pthread_mutex_t	data_mutex;
 	t_BOOL			free;
 	struct timeval	next_free;
 }	t_dongle;
@@ -87,11 +88,12 @@ typedef struct s_queue
 typedef struct s_coder
 {
 	t_data			data;
-	unsigned int	*nb_compiles;
+	unsigned int	nb_compiles;
+	pthread_mutex_t	compile_mutex;
 	pthread_mutex_t	*queue_mutex;
 	pthread_mutex_t	*output_mutex;
+	pthread_mutex_t	*active_mutex;
 	pthread_cond_t	*queue_cond;
-	pthread_mutex_t	*work_mutex;
 	pthread_mutex_t	burnout_mutex;
 	pthread_t		thread;
 	t_dongle		*left;
@@ -102,20 +104,20 @@ typedef struct s_coder
 	struct timespec	cooldown;
 	t_queue			**queue;
 	t_BOOL			*active;
+	t_BOOL			finished;
 }	t_coder;
 
 typedef struct s_control
 {
 	t_data			data;
 	pthread_t		thread;
-	pthread_mutex_t	queue_mutex;
-	pthread_mutex_t	output_mutex;
-	pthread_mutex_t	work_mutex;
-	pthread_cond_t	queue_cond;
+	pthread_mutex_t	*active_mutex;
+	pthread_mutex_t	*queue_mutex;
+	pthread_mutex_t	*output_mutex;
+	pthread_cond_t	*queue_cond;
 	struct timeval	start_time;
 	t_coder			*coders;
 	t_dongle		*dongles;
-	unsigned int	*nb_compiles;
 	t_queue			*queue;
 	t_BOOL			*active;
 }	t_control;
@@ -168,4 +170,10 @@ t_BOOL			is_burned_out(struct timeval time,
 void			free_everything(t_control *controller);
 void			liberate_threads(t_control *controller);
 void			free_queue(t_queue *queue);
+// new
+t_BOOL			everyone_is_finished(t_control *controller);
+t_BOOL			is_finished(t_coder *coder);
+void			lock_dongles(t_coder *coder, t_signal signal);
+t_BOOL			someone_in_queue(t_coder *coder);
+t_BOOL			supervisor_said_its_over(t_coder *coder);
 #endif

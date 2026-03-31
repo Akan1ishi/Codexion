@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 14:04:19 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/29 17:22:35 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/31 17:46:59 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,20 +22,19 @@ void	*surveil(void *arg)
 	while (TRUE)
 	{
 		gettimeofday(&current_time, NULL);
-		pthread_mutex_lock(&controller->work_mutex);
-		if (*controller->nb_compiles >= controller->data.compile_goal)
-			return (end(current_time, SUCCESS, 0, controller));
-		pthread_mutex_unlock(&controller->work_mutex);
 		i = 0;
 		while (i < controller->data.coders)
 		{
 			pthread_mutex_lock(&controller->coders[i].burnout_mutex);
 			if (is_burned_out(current_time, *controller->coders[i].last_compile,
 					controller->data.burnout_time) == TRUE)
-				return (end(current_time, BURNOUT, 0, controller));
+				return (end(current_time, BURNOUT, i, controller));
 			pthread_mutex_unlock(&controller->coders[i].burnout_mutex);
 			i++;
 		}
+		if (everyone_is_finished(controller) == TRUE)
+			return (end(current_time, SUCCESS, 1, controller));
+		usleep(100);
 	}
 	return (NULL);
 }
@@ -49,8 +48,8 @@ void	*code(void *arg)
 		return (rot_in_hell(coder));
 	while (TRUE)
 	{
-		if (*coder->active == FALSE)
-			break ;
+		if (supervisor_said_its_over(coder) == TRUE)
+			break;
 		pthread_mutex_lock(coder->queue_mutex);
 		add_to_queue(coder->queue, coder);
 		while (dongles_are_free(coder) == FALSE
@@ -65,6 +64,9 @@ void	*code(void *arg)
 		remove_from_queue(coder->queue, coder);
 		pthread_mutex_unlock(coder->queue_mutex);
 		work(coder);
+		usleep(100);
+		if (is_finished(coder) == TRUE)
+			break;
 	}
 	return (NULL);
 }
@@ -74,8 +76,8 @@ void	*rot_in_hell(t_coder *coder)
 	while (TRUE)
 	{
 		usleep(1000);
-		if (*coder->active == FALSE)
-			break ;
+		if (supervisor_said_its_over(coder) == TRUE)
+			break;
 	}
 	return (NULL);
 }
@@ -96,6 +98,13 @@ t_BOOL	appears_before(int id, int neighbour_id, t_queue *queue)
 void	work(t_coder *coder)
 {
 	work_schedule(coder, COMPILING);
+	if (coder->nb_compiles == coder->data.compile_goal)
+	{
+		pthread_mutex_lock(&coder->compile_mutex);
+		coder->finished = TRUE;
+		pthread_mutex_unlock(&coder->compile_mutex);
+		return ;
+	}
 	work_schedule(coder, DEBUGGING);
 	work_schedule(coder, REFACTORING);
 }
