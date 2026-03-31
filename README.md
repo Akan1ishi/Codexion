@@ -23,11 +23,11 @@
 >
 > The programm ends if;
 - one coder has burned out
-- the total compilation goal has been achieved
+- all coders have compiled enough to reach the goal
 >
 > Burning out and compilation goal are both parameters specified in the input. Burning out meaning that the time specified in *burnout time* has passed since the last compilation of that coder.
 >
-> This is regularily checked by a *monitor* thread, that supervises the coders and checks these ending conditions.
+> This is regularily checked by a *monitor* thread, that supervises the coders and checks burnout times.
 >
 > Thread management is specified [below](#thread-sync).
 ##  Instructions
@@ -96,7 +96,7 @@ Coffman's conditions are avoided as follows:
   
 > Each dongle has a mutex. This in theory is a safeguard that is never crossed since the queue mutex protects the dongle access. Before compiling, a coder thread locks both of the neighbouring dongle mutexes, and unlocks them when he is done.
 >
-> While inscribing data such as incrementing the total number of compiles / the status of the dongles (so just after being done compiling), the coder acquires a `work_mutex` to make sure that data is never corrupted / accessed at the same time. He then unlocks it immediatly.
+> Each coder protects its compile numbers by a `compile_mutex` and the `active` boolean state for the simulation is also protected by an `active_mutex`, shared by the monitoring thread and the coders.
 >
 > For logging, the same principle is at play with an `output mutex`. Before printing any state message of any kind, each thread (including the **monitor**) has to acquire the output mutex and then release it. This way, every message is serialized.
 >
