@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 14:04:19 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/31 17:46:59 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/03/31 18:41:37 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ void	*code(void *arg)
 	while (TRUE)
 	{
 		if (supervisor_said_its_over(coder) == TRUE)
-			break;
+			break ;
 		pthread_mutex_lock(coder->queue_mutex);
 		add_to_queue(coder->queue, coder);
 		while (dongles_are_free(coder) == FALSE
@@ -64,9 +64,8 @@ void	*code(void *arg)
 		remove_from_queue(coder->queue, coder);
 		pthread_mutex_unlock(coder->queue_mutex);
 		work(coder);
-		usleep(100);
 		if (is_finished(coder) == TRUE)
-			break;
+			break ;
 	}
 	return (NULL);
 }
@@ -77,7 +76,7 @@ void	*rot_in_hell(t_coder *coder)
 	{
 		usleep(1000);
 		if (supervisor_said_its_over(coder) == TRUE)
-			break;
+			break ;
 	}
 	return (NULL);
 }
