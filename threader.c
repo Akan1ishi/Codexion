@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 14:04:19 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/04/01 12:03:47 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/01 18:23:46 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,19 +48,9 @@ void	*code(void *arg)
 	{
 		if (supervisor_said_its_over(coder) == TRUE)
 			break ;
-		pthread_mutex_lock(coder->wait_mutex);
-		add_to_queue(coder->queue, coder);
-		while (dongles_are_free(coder) == FALSE
-			|| next_in_queue(coder, *coder->queue) == FALSE)
-		{
-			if (dongles_on_cooldown(coder) == TRUE)
-				pthread_cond_timedwait(coder->wait_cond, coder->wait_mutex,
-					convert_longest_dongle(coder, &coder->cooldown));
-			else
-				pthread_cond_wait(coder->wait_cond, coder->wait_mutex);
-		}
-		remove_from_queue(coder->queue, coder);
-		pthread_mutex_unlock(coder->wait_mutex);
+		queue_manipulation(coder, ADD);
+		wait_on_dongles(coder);
+		queue_manipulation(coder, REMOVE);
 		work(coder);
 		if (is_finished(coder) == TRUE)
 			break ;
@@ -77,19 +67,6 @@ void	*rot_in_hell(t_coder *coder)
 			break ;
 	}
 	return (NULL);
-}
-
-t_BOOL	appears_before(int id, int neighbour_id, t_queue *queue)
-{
-	while (queue)
-	{
-		if (((t_coder *) queue->coder)->id == (unsigned int) id)
-			return (TRUE);
-		if (((t_coder *) queue->coder)->id == (unsigned int) neighbour_id)
-			return (FALSE);
-		queue = queue->next;
-	}
-	return (FALSE);
 }
 
 void	work(t_coder *coder)

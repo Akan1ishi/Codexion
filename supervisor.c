@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 15:39:05 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/04/01 11:35:46 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/01 13:15:35 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,19 +48,4 @@ t_BOOL	supervisor_said_its_over(t_coder *coder)
 		result = TRUE;
 	pthread_mutex_unlock(coder->active_mutex);
 	return (result);
-}
-
-void	lock_dongles(t_coder *coder, t_signal signal)
-{
-	t_mutex_op	mutex_handler;
-
-	mutex_handler = get_mutex_op(signal);
-	if (coder->id % 2 == 0)
-	{
-		mutex_handler(coder->left->data_mutex);
-		mutex_handler(coder->right->data_mutex);
-		return ;
-	}
-	mutex_handler(coder->right->data_mutex);
-	mutex_handler(coder->left->data_mutex);
 }

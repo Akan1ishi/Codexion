@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 17:07:43 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/29 15:26:15 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/01 17:33:12 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,12 +46,12 @@ int	check_str(char *str)
 	if (str[0] == 'f')
 	{
 		if (strcmp(str, fifo) == FALSE)
-			return (EDF);
+			return (FIFO);
 	}
 	else if (str[0] == 'e')
 	{
 		if (strcmp(str, edf) == FALSE)
-			return (FIFO);
+			return (EDF);
 	}
 	return (FALSE);
 }

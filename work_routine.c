@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/29 14:30:01 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/04/01 11:41:33 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/01 14:13:14 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,12 +62,11 @@ void	work_schedule(t_coder *coder, t_type operation)
 		return ;
 	}
 	manage_dongles(coder, LOCK);
+	coder->right->free = FALSE;
+	coder->left->free = FALSE;
+	manage_dongles(coder, UNLOCK);
 	log_status(coder, operation);
 	wait_cooldown(operation, coder->data);
 	coder->nb_compiles += 1;
 	inscribe_dongle_data(coder);
-	manage_dongles(coder, UNLOCK);
-	pthread_mutex_lock(coder->wait_mutex);
-	pthread_cond_broadcast(coder->wait_cond);
-	pthread_mutex_unlock(coder->wait_mutex);
 }

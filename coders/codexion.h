@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 17:07:07 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/04/01 11:32:40 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/01 18:01:31 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,12 +57,23 @@ typedef struct s_data
 	t_schedule		scheduler;
 }	t_data;
 
+typedef struct s_queue
+{
+	unsigned int 	coder_id;
+	struct timeval	last_compile;
+	unsigned int	burnout_time;
+	struct s_queue 	*next;
+}	t_queue;
+
 typedef struct s_dongle
 {
 	pthread_mutex_t	*mutex;
-	pthread_mutex_t	*data_mutex;
+	pthread_mutex_t	*queue_mutex;
+	pthread_mutex_t	*wait_mutex;
+	pthread_cond_t	*wait_cond;
 	t_BOOL			free;
 	struct timeval	next_free;
+	t_queue			*waiting_list;
 }	t_dongle;
 
 typedef enum e_type
@@ -79,31 +90,27 @@ typedef enum e_signal
 	UNLOCK
 }	t_signal;
 
-typedef struct s_queue
-{
-	void			*coder;
-	struct s_queue	*next;
-}	t_queue;
-
 typedef struct s_coder
 {
 	t_data			data;
 	unsigned int	nb_compiles;
 	pthread_mutex_t	*compile_mutex;
-	pthread_mutex_t	*queue_mutex;
 	pthread_mutex_t	*output_mutex;
 	pthread_mutex_t	*active_mutex;
-	pthread_cond_t	*wait_cond;
 	pthread_mutex_t	*burnout_mutex;
 	pthread_mutex_t	*wait_mutex;
+	pthread_cond_t	*wait_cond;
 	pthread_t		thread;
 	t_dongle		*left;
+	pthread_cond_t	*left_cond;
+	pthread_mutex_t	*left_mutex;
 	t_dongle		*right;
+	pthread_cond_t	*right_cond;
+	pthread_mutex_t	*right_mutex;
 	unsigned int	id;
 	struct timeval	start_time;
 	struct timeval	*last_compile;
 	struct timespec	cooldown;
-	t_queue			**queue;
 	t_BOOL			*active;
 	t_BOOL			finished;
 }	t_coder;
@@ -113,18 +120,26 @@ typedef struct s_control
 	t_data			data;
 	pthread_t		thread;
 	pthread_mutex_t	*active_mutex;
-	pthread_mutex_t	*queue_mutex;
 	pthread_mutex_t	*output_mutex;
-	pthread_mutex_t	*wait_mutex;
-	pthread_cond_t	*wait_cond;
 	struct timeval	start_time;
 	t_coder			*coders;
 	t_dongle		*dongles;
-	t_queue			*queue;
 	t_BOOL			*active;
 }	t_control;
 
+typedef enum e_queue_arg
+{
+	ADD,
+	REMOVE
+}	t_queue_arg;
+
+typedef enum e_dongle_type
+{
+	LEFT,
+	RIGHT
+}	t_dongle_type;
 typedef int	(*t_mutex_op)(pthread_mutex_t *);
+typedef void (*t_queue_op)(t_coder *coder, t_dongle *dongle);
 // parsing
 t_data			convert_input_to_data(int ac, char **av);
 t_BOOL			ft_validate_input(int ac, char **av);
@@ -156,13 +171,6 @@ t_BOOL			dongles_are_free(t_coder *coder);
 t_BOOL			dongles_on_cooldown(t_coder *coder);
 struct timespec	*convert_longest_dongle(t_coder *coder, struct timespec *cd);
 long long		get_total_time_timeval(struct timeval time);
-// queue
-void			add_to_queue(t_queue **queue, t_coder *coder);
-t_BOOL			next_in_queue(t_coder *coder, t_queue *queue);
-void			remove_from_queue(t_queue **queue, t_coder *coder);
-t_BOOL			in_queue(t_queue *queue, unsigned int id);
-t_BOOL			priority(int id, int nid, t_schedule scheduler, t_queue *queue);
-t_BOOL			appears_before(int id, int neighbour_id, t_queue *queue);
 //
 void			*end(struct timeval time, t_end signal,
 					int id, t_control *controller);
@@ -178,4 +186,18 @@ t_BOOL			is_finished(t_coder *coder);
 void			lock_dongles(t_coder *coder, t_signal signal);
 t_BOOL			someone_in_queue(t_coder *coder);
 t_BOOL			supervisor_said_its_over(t_coder *coder);
+// queue
+void			queue_manipulation(t_coder *coder, t_queue_arg signal);
+void			add_to_waiting_list(t_coder *coder, t_dongle *dongle);
+void			remove_from_waiting_list(t_coder *coder, t_dongle *dongle);
+t_dongle_type	get_dongle_cooldown(t_coder *coder, struct timespec *time);
+void			wait_on_dongles(t_coder *coder);
+void			signal_neighbours(t_coder *coder);
+// priority
+t_BOOL	priority(t_coder *coder);
+t_BOOL	no_neighbour_in(t_coder *coder);
+t_BOOL	im_first_in(t_coder *coder, t_dongle *dongle);
+t_BOOL	i_will_burn_out(t_coder *coder, t_dongle *dongle);
+void	affect_neighbouring_cond(t_control *controller);
+
 #endif

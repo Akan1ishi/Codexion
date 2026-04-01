@@ -1,6 +1,6 @@
 SRCS 		= free.c main.c parser.c timer.c \
 			  dongler.c generator.c queue.c \
-			  threader.c work_routine.c supervisor.c
+			  threader.c work_routine.c supervisor.c dongle_queue.c priority.c
 CC			= cc
 RM			= rm -rf
 CFLAGS		= -Wall -Wextra -Werror -pthread
