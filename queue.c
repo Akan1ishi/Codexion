@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/29 14:28:49 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/31 18:39:16 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/01 11:59:57 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@ void	add_to_queue(t_queue **queue, t_coder *coder)
 	t_queue	*element;
 	t_queue	*temp;
 
+	pthread_mutex_lock(coder->queue_mutex);
 	element = malloc(sizeof(t_queue) * 1);
 	element->coder = coder;
 	element->next = NULL;
@@ -29,13 +30,16 @@ void	add_to_queue(t_queue **queue, t_coder *coder)
 			temp = temp->next;
 		temp->next = element;
 	}
+	pthread_mutex_unlock(coder->queue_mutex);
 }
 
 t_BOOL	next_in_queue(t_coder *coder, t_queue *queue)
 {
 	int	left;
 	int	right;
+	t_BOOL	result;
 
+	result = TRUE;
 	if (coder->id == 1)
 		left = coder->data.coders;
 	else
@@ -44,17 +48,15 @@ t_BOOL	next_in_queue(t_coder *coder, t_queue *queue)
 		right = 1;
 	else
 		right = coder->id + 1;
+	pthread_mutex_lock(coder->queue_mutex);
 	if (in_queue(queue, right) == TRUE)
-	{
 		if (priority(coder->id, right, coder->data.scheduler, queue) == FALSE)
 			return (FALSE);
-	}
-	if (in_queue(queue, left) == TRUE)
-	{
+	if (result == TRUE && in_queue(queue, left) == TRUE)
 		if (priority(coder->id, left, coder->data.scheduler, queue) == FALSE)
-			return (FALSE);
-	}
-	return (TRUE);
+			result = FALSE;
+	pthread_mutex_unlock(coder->queue_mutex);
+	return (result);
 }
 
 void	remove_from_queue(t_queue **queue, t_coder *coder)
@@ -62,12 +64,14 @@ void	remove_from_queue(t_queue **queue, t_coder *coder)
 	t_queue	*temp;
 	t_queue	*element;
 
+	pthread_mutex_lock(coder->queue_mutex);
 	temp = *queue;
 	if (*queue && ((t_coder *)temp->coder)->id == coder->id)
 	{
 		element = *queue;
 		*queue = (*queue)->next;
 		free(element);
+		pthread_mutex_unlock(coder->queue_mutex);
 		return ;
 	}
 	while (temp->next && ((t_coder *)temp->next->coder)->id != coder->id)
@@ -75,6 +79,7 @@ void	remove_from_queue(t_queue **queue, t_coder *coder)
 	element = temp->next;
 	temp->next = element->next;
 	free(element);
+	pthread_mutex_unlock(coder->queue_mutex);
 }
 
 t_BOOL	in_queue(t_queue *queue, unsigned int id)

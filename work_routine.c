@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/29 14:30:01 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/31 18:23:03 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/01 11:41:33 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ void	work_schedule(t_coder *coder, t_type operation)
 	coder->nb_compiles += 1;
 	inscribe_dongle_data(coder);
 	manage_dongles(coder, UNLOCK);
-	pthread_mutex_lock(coder->queue_mutex);
-	pthread_cond_broadcast(coder->queue_cond);
-	pthread_mutex_unlock(coder->queue_mutex);
+	pthread_mutex_lock(coder->wait_mutex);
+	pthread_cond_broadcast(coder->wait_cond);
+	pthread_mutex_unlock(coder->wait_mutex);
 }

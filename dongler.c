@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 17:51:08 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/31 19:42:22 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/01 11:49:13 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,13 +76,13 @@ void	manage_dongles(t_coder *coder, t_signal signal)
 	mutex_handler = get_mutex_op(signal);
 	if (coder->id % 2 == 0)
 	{
-		mutex_handler(&coder->left->mutex);
-		mutex_handler(&coder->right->mutex);
+		mutex_handler(coder->left->mutex);
+		mutex_handler(coder->right->mutex);
 	}
 	else
 	{
-		mutex_handler(&coder->right->mutex);
-		mutex_handler(&coder->left->mutex);
+		mutex_handler(coder->right->mutex);
+		mutex_handler(coder->left->mutex);
 	}
 	if (signal == LOCK)
 	{
@@ -98,12 +98,12 @@ void	inscribe_dongle_data(t_coder *coder)
 	struct timeval	tz;
 
 	gettimeofday(&tz, NULL);
-	pthread_mutex_lock(&coder->burnout_mutex);
+	pthread_mutex_lock(coder->burnout_mutex);
 	*coder->last_compile = tz;
-	pthread_mutex_unlock(&coder->burnout_mutex);
-	lock_dongles(coder, LOCK);
+	pthread_mutex_unlock(coder->burnout_mutex);
 	tz.tv_sec += coder->data.dongle_time / 1000;
 	tz.tv_usec += (coder->data.dongle_time * 1000) % 1000000;
+	lock_dongles(coder, LOCK);
 	coder->right->next_free = tz;
 	coder->left->next_free = tz;
 	coder->right->free = TRUE;

@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/29 14:26:51 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/31 18:28:29 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/01 11:30:20 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ void	*end(struct timeval now, t_end signal, int id, t_control *controller)
 	else
 	{
 		printf("%lld %d burned out\n", time, id + 1);
-		pthread_mutex_unlock(&controller->coders[id].burnout_mutex);
+		pthread_mutex_unlock(controller->coders[id].burnout_mutex);
 	}
 	pthread_mutex_unlock(controller->output_mutex);
 	return (NULL);

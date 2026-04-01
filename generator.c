@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/18 11:43:07 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/31 19:50:09 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/01 11:38:45 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,8 +23,10 @@ void	generate_dongles(t_control *controller)
 	i = 0;
 	while (i < controller->data.coders)
 	{
-		pthread_mutex_init(&dongles[i].mutex, NULL);
-		pthread_mutex_init(&dongles[i].data_mutex, NULL);
+		dongles[i].mutex = malloc(sizeof(pthread_mutex_t));
+		dongles[i].data_mutex = malloc(sizeof(pthread_mutex_t));
+		pthread_mutex_init(dongles[i].mutex, NULL);
+		pthread_mutex_init(dongles[i].data_mutex, NULL);
 		dongles[i].free = TRUE;
 		dongles[i].next_free = controller->start_time;
 		i++;
@@ -52,7 +54,8 @@ void	generate_coders(t_control *controller)
 		coders[i].queue_mutex = controller->queue_mutex;
 		coders[i].active_mutex = controller->active_mutex;
 		coders[i].output_mutex = controller->output_mutex;
-		coders[i].queue_cond = controller->queue_cond;
+		coders[i].wait_cond = controller->wait_cond;
+		coders[i].wait_mutex = controller->wait_mutex;
 		coders[i].finished = FALSE;
 		assign_dongle(coders, controller, i);
 		i++;
@@ -65,18 +68,19 @@ t_control	init_controller(t_data data)
 	t_control	controller;
 
 	controller.data = data;
-	controller.thread = 0;
 	controller.active = malloc(sizeof(t_BOOL));
 	*controller.active = TRUE;
 	controller.queue = NULL;
 	controller.queue_mutex = malloc(sizeof(pthread_mutex_t));
 	controller.output_mutex = malloc(sizeof(pthread_mutex_t));
 	controller.active_mutex = malloc(sizeof(pthread_mutex_t));
-	controller.queue_cond = malloc(sizeof(pthread_cond_t));
+	controller.wait_cond = malloc(sizeof(pthread_cond_t));
+	controller.wait_mutex = malloc(sizeof(pthread_mutex_t));
 	pthread_mutex_init(controller.queue_mutex, NULL);
 	pthread_mutex_init(controller.active_mutex, NULL);
-	pthread_cond_init(controller.queue_cond, NULL);
+	pthread_cond_init(controller.wait_cond, NULL);
 	pthread_mutex_init(controller.output_mutex, NULL);
+	pthread_mutex_init(controller.wait_mutex, NULL);
 	gettimeofday(&controller.start_time, NULL);
 	generate_dongles(&controller);
 	generate_coders(&controller);
@@ -110,8 +114,10 @@ void	start_threads(t_control controller)
 
 void	assign_dongle(t_coder *coders, t_control *controller, unsigned int id)
 {
-	pthread_mutex_init(&coders[id].burnout_mutex, NULL);
-	pthread_mutex_init(&coders[id].compile_mutex, NULL);
+	coders[id].burnout_mutex = malloc(sizeof(pthread_mutex_t));
+	coders[id].compile_mutex = malloc(sizeof(pthread_mutex_t));
+	pthread_mutex_init(coders[id].burnout_mutex, NULL);
+	pthread_mutex_init(coders[id].compile_mutex, NULL);
 	coders[id].active = controller->active;
 	coders[id].queue = &controller->queue;
 	coders[id].right = &controller->dongles[id];

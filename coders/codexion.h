@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 17:07:07 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/03/31 18:28:11 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/01 11:32:40 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,8 +59,8 @@ typedef struct s_data
 
 typedef struct s_dongle
 {
-	pthread_mutex_t	mutex;
-	pthread_mutex_t	data_mutex;
+	pthread_mutex_t	*mutex;
+	pthread_mutex_t	*data_mutex;
 	t_BOOL			free;
 	struct timeval	next_free;
 }	t_dongle;
@@ -89,12 +89,13 @@ typedef struct s_coder
 {
 	t_data			data;
 	unsigned int	nb_compiles;
-	pthread_mutex_t	compile_mutex;
+	pthread_mutex_t	*compile_mutex;
 	pthread_mutex_t	*queue_mutex;
 	pthread_mutex_t	*output_mutex;
 	pthread_mutex_t	*active_mutex;
-	pthread_cond_t	*queue_cond;
-	pthread_mutex_t	burnout_mutex;
+	pthread_cond_t	*wait_cond;
+	pthread_mutex_t	*burnout_mutex;
+	pthread_mutex_t	*wait_mutex;
 	pthread_t		thread;
 	t_dongle		*left;
 	t_dongle		*right;
@@ -114,7 +115,8 @@ typedef struct s_control
 	pthread_mutex_t	*active_mutex;
 	pthread_mutex_t	*queue_mutex;
 	pthread_mutex_t	*output_mutex;
-	pthread_cond_t	*queue_cond;
+	pthread_mutex_t	*wait_mutex;
+	pthread_cond_t	*wait_cond;
 	struct timeval	start_time;
 	t_coder			*coders;
 	t_dongle		*dongles;
