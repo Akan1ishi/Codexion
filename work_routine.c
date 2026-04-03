@@ -6,20 +6,11 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/29 14:30:01 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/04/01 14:13:14 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/03 18:37:38 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "coders/codexion.h"
-
-t_mutex_op	get_mutex_op(t_signal signal)
-{
-	if (signal == LOCK)
-		return (pthread_mutex_lock);
-	else if (signal == UNLOCK)
-		return (pthread_mutex_unlock);
-	return (NULL);
-}
 
 void	log_status(t_coder *coder, t_type operation)
 {
@@ -61,10 +52,6 @@ void	work_schedule(t_coder *coder, t_type operation)
 		wait_cooldown(operation, coder->data);
 		return ;
 	}
-	manage_dongles(coder, LOCK);
-	coder->right->free = FALSE;
-	coder->left->free = FALSE;
-	manage_dongles(coder, UNLOCK);
 	log_status(coder, operation);
 	wait_cooldown(operation, coder->data);
 	coder->nb_compiles += 1;

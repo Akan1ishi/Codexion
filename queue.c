@@ -6,13 +6,13 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/01 13:19:47 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/04/01 18:26:22 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/03 13:37:30 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "coders/codexion.h"
 
-void	queue_manipulation(t_coder *coder, t_queue_arg signal)
+void	queue_manipulation(t_coder *coder, t_queue_arg signal, t_dongle *dongle)
 {
 		t_queue_op	func;
 
@@ -20,16 +20,7 @@ void	queue_manipulation(t_coder *coder, t_queue_arg signal)
 			func = add_to_waiting_list;
 		else
 			func = remove_from_waiting_list;
-		if (coder->id % 2 == 0)
-		{
-			func(coder, coder->right);
-			func(coder, coder->left);
-		}
-		else
-		{
-			func(coder, coder->left);
-			func(coder, coder->right);
-		}
+		func(coder, dongle);
 }
 
 void	add_to_waiting_list(t_coder *coder, t_dongle *dongle)

@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 14:04:19 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/04/01 18:23:46 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/03 18:22:06 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,25 +39,6 @@ void	*surveil(void *arg)
 	return (NULL);
 }
 
-void	*code(void *arg)
-{
-	t_coder	*coder;
-
-	coder = (t_coder *) arg;
-	while (TRUE)
-	{
-		if (supervisor_said_its_over(coder) == TRUE)
-			break ;
-		queue_manipulation(coder, ADD);
-		wait_on_dongles(coder);
-		queue_manipulation(coder, REMOVE);
-		work(coder);
-		if (is_finished(coder) == TRUE)
-			break ;
-	}
-	return (NULL);
-}
-
 void	*rot_in_hell(t_coder *coder)
 {
 	while (TRUE)
@@ -77,8 +58,10 @@ void	work(t_coder *coder)
 		pthread_mutex_lock(coder->compile_mutex);
 		coder->finished = TRUE;
 		pthread_mutex_unlock(coder->compile_mutex);
+		unlock_dongles(coder);
 		return ;
 	}
+	unlock_dongles(coder);
 	work_schedule(coder, DEBUGGING);
 	work_schedule(coder, REFACTORING);
 }

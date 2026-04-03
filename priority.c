@@ -6,28 +6,24 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/01 16:58:56 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/04/01 18:34:35 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/03 20:20:36 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "coders/codexion.h"
 
-t_BOOL	priority(t_coder *coder)
+t_BOOL	priority(t_coder *coder, t_dongle *dongle)
 {
 	if (no_neighbour_in(coder) == TRUE)
 		return (TRUE);
 	if (coder->data.scheduler == FIFO)
 	{
-		if (im_first_in(coder, coder->left) == TRUE)
-			return (TRUE);
-		if (im_first_in(coder, coder->right) == TRUE)
-			return (TRUE);
-		return (FALSE);
+		if (im_first_in(coder, dongle) == FALSE)
+			return (FALSE);
 	}
 	else
 	{
-		if(i_will_burn_out(coder, coder->left) == FALSE
-			|| i_will_burn_out(coder, coder->right) == FALSE)
+		if(i_will_burn_out(coder, dongle) == FALSE)
 			return (FALSE);
 	}
 	return (TRUE);

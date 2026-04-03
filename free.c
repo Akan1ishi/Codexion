@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/29 14:29:19 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/04/01 16:55:30 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/03 18:35:35 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,17 +36,15 @@ void	liberate_threads(t_control *controller)
 	while (i < controller->data.coders)
 	{
 		pthread_mutex_destroy(controller->dongles[i].mutex);
+		free(controller->dongles[i].mutex);
 		pthread_mutex_destroy(controller->dongles[i].queue_mutex);
+		free(controller->dongles[i].queue_mutex);
+		pthread_cond_destroy(controller->dongles[i].wait);
+		free(controller->dongles[i].wait);
 		pthread_mutex_destroy(controller->coders[i].burnout_mutex);
 		pthread_mutex_destroy(controller->coders[i].compile_mutex);
-		pthread_mutex_destroy(controller->coders[i].wait_mutex);
-		pthread_cond_destroy(controller->coders[i].wait_cond);
-		free(controller->dongles[i].mutex);
-		free(controller->dongles[i].queue_mutex);
 		free(controller->coders[i].burnout_mutex);
 		free(controller->coders[i].compile_mutex);
-		free(controller->coders[i].wait_mutex);
-		free(controller->coders[i].wait_cond);
 		i++;
 	}
 	pthread_mutex_destroy(controller->output_mutex);
