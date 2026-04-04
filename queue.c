@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/01 13:19:47 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/04/04 14:13:17 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/04 14:44:03 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,8 +32,7 @@ void	add_to_waiting_list(t_coder *coder, t_dongle *dongle)
 	element->coder_id = coder->id;
 	element->last_compile = *coder->last_compile;
 	element->burnout_time = coder->data.burnout_time;
-	element->coder = malloc(sizeof(t_coder));
-	element->coder = coder;
+	element->coder = (t_coder *) coder;
 	element->next = NULL;
 	pthread_mutex_lock(dongle->queue_mutex);
 	if (dongle->waiting_list == NULL)
