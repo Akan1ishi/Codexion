@@ -6,11 +6,28 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 14:04:19 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/04/03 18:22:06 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/04 13:21:03 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "coders/codexion.h"
+
+void	*code(void *arg)
+{
+	t_coder	*coder;
+
+	coder = (t_coder *)arg;
+	while (TRUE)
+	{
+		if (supervisor_said_its_over(coder) == TRUE)
+			break ;
+		ask_for_dongles(coder);
+		work(coder);
+		if (is_finished(coder) == TRUE)
+			break ;
+	}
+	return (NULL);
+}
 
 void	*surveil(void *arg)
 {
@@ -48,20 +65,4 @@ void	*rot_in_hell(t_coder *coder)
 			break ;
 	}
 	return (NULL);
-}
-
-void	work(t_coder *coder)
-{
-	work_schedule(coder, COMPILING);
-	if (coder->nb_compiles == coder->data.compile_goal)
-	{
-		pthread_mutex_lock(coder->compile_mutex);
-		coder->finished = TRUE;
-		pthread_mutex_unlock(coder->compile_mutex);
-		unlock_dongles(coder);
-		return ;
-	}
-	unlock_dongles(coder);
-	work_schedule(coder, DEBUGGING);
-	work_schedule(coder, REFACTORING);
 }

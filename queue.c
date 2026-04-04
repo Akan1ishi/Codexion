@@ -6,7 +6,7 @@
 /*   By: lumarcuc <lumarcuc@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/01 13:19:47 by lumarcuc          #+#    #+#             */
-/*   Updated: 2026/04/03 13:37:30 by lumarcuc         ###   ########.fr       */
+/*   Updated: 2026/04/04 14:13:17 by lumarcuc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,13 +14,13 @@
 
 void	queue_manipulation(t_coder *coder, t_queue_arg signal, t_dongle *dongle)
 {
-		t_queue_op	func;
+	t_queue_op	func;
 
-		if (signal == ADD)
-			func = add_to_waiting_list;
-		else
-			func = remove_from_waiting_list;
-		func(coder, dongle);
+	if (signal == ADD)
+		func = add_to_waiting_list;
+	else
+		func = remove_from_waiting_list;
+	func(coder, dongle);
 }
 
 void	add_to_waiting_list(t_coder *coder, t_dongle *dongle)
@@ -32,6 +32,8 @@ void	add_to_waiting_list(t_coder *coder, t_dongle *dongle)
 	element->coder_id = coder->id;
 	element->last_compile = *coder->last_compile;
 	element->burnout_time = coder->data.burnout_time;
+	element->coder = malloc(sizeof(t_coder));
+	element->coder = coder;
 	element->next = NULL;
 	pthread_mutex_lock(dongle->queue_mutex);
 	if (dongle->waiting_list == NULL)

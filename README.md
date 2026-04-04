@@ -23,7 +23,7 @@
 >
 > The programm ends if;
 - one coder has burned out
-- all coders have compiled enough to reach the goal
+- all coders have compiled enough to reach their goal
 >
 > Burning out and compilation goal are both parameters specified in the input. Burning out meaning that the time specified in *burnout time* has passed since the last compilation of that coder.
 >
@@ -78,25 +78,23 @@ If anything is misspelled / the int values are negative or higher than INT_MAX, 
 >
 > To avoid deadlocks, no thread is ever left on a lock try that is a condition. The only case where this may have been an issue is for 1 coder. I have 'hardcoded' the solution in which the coder (alone) just waits for the monitor thread to tell him that he is starved.
 > 
-> A robust queue system in a `while(dongles are not free || you do not have priority)` into `pthread_cond_waits` guards any thread of jumping ahead of others.
+> A robust queue system in a `while(dongles are not free || you do not have priority)` into `pthread_cond_wait` guards any thread of jumping ahead of others.
 >
 > Under `edf`, threads will evaluate their priority based on **last time compiled**, and so starvation will be avoided at all cost.
 >
 Coffman's conditions are avoided as follows:
-- Mutual exclusion: **queue** is guarded by `queue_mutex`, **dongles** by their own mutexes, **shared data** by a `work mutex` and **output** by a `output mutex`.
+- Mutual exclusion: **queue** is guarded by `queue_mutex` in every **dongle**, and access to that queue is guarded by `mutex` in the same struct, **outputs** (prints) by an `output mutex`, **last_compile** by a `compile_mutex` and **active_status** by an `active_mutex`.
 - Hold on and wait: no coder holds any critical information that will permalock another. Every thread is guaranteed (under doable rules) to get into compilation.
-- No preemption: no thread can be forced out of a process by another one grabbing its ressources. The only time a coder gets any information from outside are from `broadcasts` or the `active` boolean from the monitor thread.
+- No preemption: no thread can be forced out of a process by another one grabbing its ressources. The only time a coder gets any information from outside are from `broadcasts` (when one coder is done with a dongle)or the `active` boolean from the monitor thread.
 - Circular wait: the waiting pattern for accessing the **code routine** is handled by a queue **heap**, that gets re-checked each time a coder is done with other ressources. This means no indefinite wait.
 
 ##  Thread synchronization mechanisms
 
 > To safeguard the ressources shared, I used a number of mutexes for every task.
 > 
-> The queue is blocked by a mutex named `queue_mutex`. If you do not meet the requirements to acquire dongles, you are stuck between `pthread_cond_timedwait` (there was a dongle on cooldown, and you wake up when its over to check again) and `pthread_cond_wait` (your neighbour is actively using dongles OR the queue **scheduler** decided you do not have priority in the queue). Every time a coder finishes compiling and has freed the dongles and set their avaibility back to `TRUE`, the thread will call `pthread_cond_broadcast` on the queue mutex, telling all waiting coders to check again on if they can compile and get out of queue.
-  
-> Each dongle has a mutex. This in theory is a safeguard that is never crossed since the queue mutex protects the dongle access. Before compiling, a coder thread locks both of the neighbouring dongle mutexes, and unlocks them when he is done.
+> To acquire a dongle, each coder has to first `lock` the dongle `mutex`. Each **dongle** has a internal queue, guarded by a mutex named `queue_mutex`. If you do not meet the requirements to acquire a dongle, you are stuck on `pthread_cond_wait` (your neighbour is actively using dongles OR the queue **scheduler** decided you do not have priority in the queue). Once your acquisition is confirmed, you set the dongle as taken (`free = FALSE`). If the dongle is on **cooldown** you will wait on the `mutex` in `phtread_cond_timedwait`. Every time a coder finishes compiling and has freed the dongles and set their avaibility back to `TRUE`, the thread will call `pthread_cond_broadcast` on the queue mutex, telling all waiting coders to check again on if they can compile and get out of queue.
 >
-> Each coder protects its compile numbers by a `compile_mutex` and the `active` boolean state for the simulation is also protected by an `active_mutex`, shared by the monitoring thread and the coders.
+> Each coder protects its active state with an `active_mutex`, shared by the monitoring thread and the coders.
 >
 > For logging, the same principle is at play with an `output mutex`. Before printing any state message of any kind, each thread (including the **monitor**) has to acquire the output mutex and then release it. This way, every message is serialized.
 >
